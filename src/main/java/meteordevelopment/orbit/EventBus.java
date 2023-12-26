@@ -15,6 +15,10 @@ import java.util.function.Function;
  * Default implementation of {@link IEventBus}.
  */
 public class EventBus implements IEventBus {
+
+    public static boolean PROFILE = false;
+    public static long PROFILE_CUTOFF_TIME = 0L;
+
     private static class LambdaFactoryInfo {
         public final String packagePrefix;
         public final LambdaListener.Factory factory;
@@ -47,10 +51,23 @@ public class EventBus implements IEventBus {
 
     @Override
     public <T> T post(T event) {
+        long time = 0L;
+
+        if (PROFILE) {
+            time = System.nanoTime();
+        }
+
         List<IListener> listeners = listenerMap.get(event.getClass());
 
         if (listeners != null) {
             for (IListener listener : listeners) listener.call(event);
+        }
+
+        if (PROFILE) {
+            long profile_time = System.nanoTime() - time;
+            if (profile_time > PROFILE_CUTOFF_TIME) {
+                System.out.println(event.getClass().getSimpleName() + "," + profile_time);
+            }
         }
 
         return event;
